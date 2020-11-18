@@ -17,30 +17,30 @@ BR_PATH				?= $(ROOT)/buildroot
 LINUX_PATH			?= $(ROOT)/linux
 OUT_PATH			?= $(ROOT)/out
 QEMU_PATH			?= $(ROOT)/qemu
-U-BOOT_PATH			?= $(ROOT)/u-boot
-MKIMAGE_PATH			?= $(U-BOOT_PATH)/tools
+UBOOT_PATH			?= $(ROOT)/u-boot
+MKIMAGE_PATH			?= $(UBOOT_PATH)/tools
 
 DEBUG				?= n
 PLATFORM			?= qemu
 
 # Binaries
-BIOS				?= $(U-BOOT_PATH)/u-boot.bin
+BIOS				?= $(UBOOT_PATH)/u-boot.bin
 CONFIG_FRAGMENT			?= $(BUILD_PATH)/.config-fragment
 KERNEL				?= $(LINUX_PATH)/arch/arm64/boot/Image
-#KERNEL				?= $(LINUX_PATH)/arch/arm64/boot/Image.gz
+KERNELZ				?= $(LINUX_PATH)/arch/arm64/boot/Image.gz
 KERNEL_UIMAGE			?= $(OUT_PATH)/uImage
 LINUX_VMLINUX			?= $(LINUX_PATH)/vmlinux
 QEMU_BIN			?= $(QEMU_PATH)/aarch64-softmmu/qemu-system-aarch64
 QEMU_DTB			?= $(OUT_PATH)/qemu-aarch64.dtb
 QEMU_ENV			?= $(OUT_PATH)/envstore.img
-ROOTFS				?= $(OUT_PATH)/rootfs.cpio.gz
-UROOTFS				?= $(OUT_PATH)/urootfs.cpio.gz
+ROOTFS				?= $(BR_PATH)/output/images/rootfs.cpio.gz
+UROOTFS				?= $(BR_PATH)/output/images/rootfs.cpio.uboot
 
 ################################################################################
 # Targets
 ################################################################################
 .PHONY: all
-all: linux qemu uboot
+all: linux qemu uboot buildroot
 
 include toolchain.mk
 
@@ -60,7 +60,9 @@ $(BR_PATH)/.config:
 buildroot: $(BR_PATH)/.config
 	$(MAKE) -C $(BR_PATH) \
 		AARCH64_PATH=$(AARCH64_PATH) \
-		BR2_CCACHE_DIR="$(CCACHE_DIR)"
+		BR2_CCACHE_DIR="$(CCACHE_DIR)" && \
+	ln -sf $(ROOTFS) $(OUT_PATH)/ && \
+	ln -sf $(UROOTFS) $(OUT_PATH)/
 
 .PHONY: buildroot-clean
 buildroot-clean:
@@ -69,17 +71,24 @@ buildroot-clean:
 ################################################################################
 # Linux kernel
 ################################################################################
-$(LINUX_PATH)/.config:
-	$(MAKE) -C $(LINUX_PATH) \
-		ARCH=arm64 \ 
-		CROSS_COMPILE="$(CCACHE)$(AARCH64_CROSS_COMPILE)" \
-		defconfig
+LINUX_DEFCONFIG_FILES := $(LINUX_PATH)/arch/arm64/configs/defconfig
+
+
+$(LINUX_PATH)/.config: $(LINUX_DEFCONFIG_FILES)
+	cd $(LINUX_PATH) && \
+                ARCH=arm64 \
+                scripts/kconfig/merge_config.sh $(LINUX_DEFCONFIG_FILES)
+
+.PHONY: linux-defconfig
+linux-defconfig: $(LINUX_PATH)/.config
 
 .PHONY: linux
-linux: $(LINUX_PATH)/.config
-	$(MAKE) -C $(LINUX_PATH) \
+linux: linux-defconfig
+	yes | $(MAKE) -C $(LINUX_PATH) \
 		ARCH=arm64 CROSS_COMPILE="$(CCACHE)$(AARCH64_CROSS_COMPILE)" \
-		Image.gz dtbs
+		Image.gz dtbs && \
+	ln -sf $(KERNEL) $(OUT_PATH)/ && \
+	ln -sf $(KERNELZ) $(OUT_PATH)/
 
 .PHONY: linux-menuconfig
 linux-menuconfig: $(LINUX_PATH)/.config
@@ -146,6 +155,7 @@ uimage: $(KERNEL)
 				-n "Linux kernel" \
 				-d $(OUT_PATH)/linux.bin $(KERNEL_UIMAGE)
 
+# FIXME: Names clashes ROOTFS and UROOTFS, this will overwrite the u-rootfs from Buildroot.
 .PHONY: urootfs
 urootfs:
 	mkdir -p $(OUT_PATH) && \
@@ -161,13 +171,17 @@ urootfs:
 ################################################################################
 # U-boot
 ################################################################################
-$(UBOOT_PATH)/.config:
-	$(MAKE) -C $(UBOOT_PATH) \
-		CROSS_COMPILE="$(CCACHE)$(AARCH64_CROSS_COMPILE)" \
-		qemu_arm64_defconfig
+UBOOT_DEFCONFIG_FILES := $(UBOOT_PATH)/configs/qemu_arm64_defconfig
+
+$(UBOOT_PATH)/.config: $(UBOOT_DEFCONFIG_FILES)
+	cd $(UBOOT_PATH) && \
+                scripts/kconfig/merge_config.sh $(UBOOT_DEFCONFIG_FILES)
+
+.PHONY: uboot-defconfig
+uboot-defconfig: $(UBOOT_PATH)/.config
 
 .PHONY: uboot
-uboot: $(UBOOT_PATH)/.config
+uboot: uboot-defconfig
 	mkdir -p $(OUT_PATH) && \
 	$(MAKE) -C $(UBOOT_PATH) \
 		CROSS_COMPILE="$(CCACHE)$(AARCH64_CROSS_COMPILE)" && \
