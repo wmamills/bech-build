@@ -40,7 +40,7 @@ Compile
 
 .. code-block:: bash
 
-	$ make -j2 toolchains
+    $ make -j2 toolchains
     $ make -j4
 
 Run

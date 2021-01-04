@@ -14,6 +14,7 @@ ROOT				?= $(PWD)
 
 BUILD_PATH			?= $(ROOT)/build
 BR_PATH				?= $(ROOT)/buildroot
+BR_DL_DIR			?= $(HOME)/br_download
 LINUX_PATH			?= $(ROOT)/linux
 OUT_PATH			?= $(ROOT)/out
 QEMU_PATH			?= $(ROOT)/qemu
@@ -22,6 +23,7 @@ MKIMAGE_PATH			?= $(UBOOT_PATH)/tools
 
 DEBUG				?= n
 PLATFORM			?= qemu
+CCACHE_DIR			?= $(HOME)/.ccache
 
 # Binaries
 BIOS				?= $(UBOOT_PATH)/u-boot.bin
@@ -58,9 +60,10 @@ $(BR_PATH)/.config:
 # and set the # correct toolchain to use.
 .PHONY: buildroot
 buildroot: $(BR_PATH)/.config
+	mkdir -p $(OUT_PATH)
 	$(MAKE) -C $(BR_PATH) \
-		AARCH64_PATH=$(AARCH64_PATH) \
-		BR2_CCACHE_DIR="$(CCACHE_DIR)" && \
+		BR2_CCACHE_DIR="$(CCACHE_DIR)" \
+		AARCH64_PATH=$(AARCH64_PATH)
 	ln -sf $(ROOTFS) $(OUT_PATH)/ && \
 	ln -sf $(UROOTFS) $(OUT_PATH)/
 
