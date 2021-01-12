@@ -134,6 +134,11 @@ create-env-image:
 		qemu-img create -f raw $(QEMU_ENV) 64M; \
 	fi
 
+mount_command:
+	@echo "Run this in QEMU / Linux / Buildroot:"
+	@echo "  mkdir /host && mount -t 9p -o trans=virtio host /host"
+	@echo "\nOnce done, you can access the host PC's files"
+
 ################################################################################
 # mkimage
 ################################################################################
@@ -207,16 +212,25 @@ uboot-cscope:
 ################################################################################
 # Run targets
 ################################################################################
-QEMU_BIOS	?= -bios u-boot.bin
-QEMU_KERNEL	?= -kernel Image.gz
+QEMU_BIOS		?= -bios u-boot.bin
+QEMU_KERNEL		?= -kernel Image.gz
 
-QEMU_ARGS	+= -nographic \
-		   -smp 1 \
-		   -machine virt \
-		   -cpu cortex-a57 \
-		   -d unimp \
-		   -m 128 \
-		   -no-acpi
+QEMU_ARGS		+= -nographic \
+		   	   -smp 1 \
+		   	   -machine virt \
+		   	   -cpu cortex-a57 \
+		   	   -d unimp \
+		   	   -m 128 \
+		   	   -no-acpi
+
+QEMU_VIRTFS_ENABLE	?= y
+QEMU_VIRTFS_HOST_DIR	?= $(ROOT)
+
+ifeq ($(QEMU_VIRTFS_ENABLE),y)
+QEMU_EXTRA_ARGS +=\
+	-fsdev local,id=fsdev0,path=$(QEMU_VIRTFS_HOST_DIR),security_model=none \
+	-device virtio-9p-device,fsdev=fsdev0,mount_tag=host
+endif
 
 ifeq ($(GDB),y)
 QEMU_ARGS	+= -s -S
@@ -250,7 +264,8 @@ run-netboot: create-env-image uimage
 		$(QEMU_ARGS) \
 		$(QEMU_BIOS) \
 		-netdev user,id=vmnic -device virtio-net-device,netdev=vmnic \
-		-drive if=pflash,format=raw,index=1,file=envstore.img
+		-drive if=pflash,format=raw,index=1,file=envstore.img \
+		$(QEMU_EXTRA_ARGS)
 
 # Target to run just Linux kernel directly. Here it's expected that the root fs
 # has been compiled into the kernel itself.
@@ -260,7 +275,8 @@ run-kernel:
 	$(QEMU_BIN) \
 		$(QEMU_ARGS) \
 		$(QEMU_KERNEL) \
-                -append "console=ttyAMA0"
+                -append "console=ttyAMA0" \
+		$(QEMU_EXTRA_ARGS)
 
 # Target to run just Linux kernel directly and pulling the root fs separately.
 .PHONY: run-kernel-initrd
@@ -270,7 +286,8 @@ run-kernel-initrd:
 		$(QEMU_ARGS) \
 		$(QEMU_KERNEL) \
 		-initrd $(ROOTFS) \
-                -append "console=ttyAMA0"
+                -append "console=ttyAMA0" \
+		$(QEMU_EXTRA_ARGS)
 
 
 ################################################################################
