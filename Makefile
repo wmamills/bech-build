@@ -28,12 +28,14 @@ CCACHE_DIR			?= $(HOME)/.ccache
 # Binaries
 BIOS				?= $(UBOOT_PATH)/u-boot.bin
 CONFIG_FRAGMENT			?= $(BUILD_PATH)/.config-fragment
+DTC				?= $(LINUX_PATH)/scripts/dtc/dtc
 KERNEL				?= $(LINUX_PATH)/arch/arm64/boot/Image
 KERNELZ				?= $(LINUX_PATH)/arch/arm64/boot/Image.gz
 KERNEL_UIMAGE			?= $(OUT_PATH)/uImage
 LINUX_VMLINUX			?= $(LINUX_PATH)/vmlinux
 QEMU_BIN			?= $(QEMU_PATH)/aarch64-softmmu/qemu-system-aarch64
 QEMU_DTB			?= $(OUT_PATH)/qemu-aarch64.dtb
+QEMU_DTS			?= $(OUT_PATH)/qemu-aarch64.dts
 QEMU_ENV			?= $(OUT_PATH)/envstore.img
 ROOTFS				?= $(BR_PATH)/output/images/rootfs.cpio.gz
 UROOTFS				?= $(BR_PATH)/output/images/rootfs.cpio.uboot
@@ -127,6 +129,9 @@ dump-dtb:
 	$(QEMU_BIN) -machine virt \
 		-cpu cortex-a57 \
 		-machine dumpdtb=$(QEMU_DTB)
+
+dump-dtb-as-dts: dump-dtb
+	$(DTC) -I dtb -O dts $(QEMU_DTB) > $(QEMU_DTS)
 
 create-env-image:
 	@if [ ! -f $(QEMU_ENV) ]; then \
