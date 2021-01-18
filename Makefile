@@ -29,6 +29,8 @@ CCACHE_DIR			?= $(HOME)/.ccache
 BIOS				?= $(UBOOT_PATH)/u-boot.bin
 CONFIG_FRAGMENT			?= $(BUILD_PATH)/.config-fragment
 DTC				?= $(LINUX_PATH)/scripts/dtc/dtc
+FITB				?= $(OUT_PATH)/kernel.itb
+FITS				?= $(BUILD_PATH)/fit/kernel.its
 KERNEL				?= $(LINUX_PATH)/arch/arm64/boot/Image
 KERNELZ				?= $(LINUX_PATH)/arch/arm64/boot/Image.gz
 KERNEL_UIMAGE			?= $(OUT_PATH)/uImage
@@ -125,6 +127,8 @@ qemu: qemu-configure
 qemu-clean:
 	cd $(QEMU_PATH) && git clean -xdf
 
+$(QEMU_DTB): dump-dtb
+
 dump-dtb:
 	$(QEMU_BIN) -machine virt \
 		-cpu cortex-a57 \
@@ -180,6 +184,9 @@ urootfs:
 				-n "Root files system" \
 				-d $(ROOTFS) $(UROOTFS)
 
+fit: $(ROOTFS) $(QEMU_DTB) linux
+	mkdir -p $(OUT_PATH) && \
+	$(MKIMAGE_PATH)/mkimage -f $(FITS) $(FITB)
 
 ################################################################################
 # U-boot
@@ -225,7 +232,7 @@ QEMU_ARGS		+= -nographic \
 		   	   -machine virt \
 		   	   -cpu cortex-a57 \
 		   	   -d unimp \
-		   	   -m 128 \
+		   	   -m 512 \
 		   	   -no-acpi
 
 QEMU_VIRTFS_ENABLE	?= y
