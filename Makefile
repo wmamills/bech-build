@@ -70,8 +70,15 @@ endif
 ################################################################################
 # Targets
 ################################################################################
+TARGET_DEPS := linux qemu uboot buildroot
+ifeq ($(SIGN),y)
+TARGET_DEPS += fit-signed
+else
+TARGET_DEPS += fit
+endif
+
 .PHONY: all
-all: linux qemu uboot buildroot fit-signed
+all: $(TARGET_DEPS)
 
 include toolchain.mk
 
