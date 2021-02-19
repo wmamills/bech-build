@@ -96,7 +96,7 @@ TARGET_DEPS += qemu-create-env-image
 endif
 
 ifeq ($(GRUB2),y)
-TARGET_DEPS += grub2
+TARGET_DEPS += grub2 grub2-create-image
 endif
 
 ifeq ($(SIGN),y)
@@ -160,23 +160,20 @@ $(GRUB2_PATH)/configure:
 	@echo "Running grub2 bootstrap"
 	cd $(GRUB2_PATH) && ./bootstrap
 
-# Explicitly set the path to the aarch64 toolchain when running the configure
-# target.
-grub2-configure: $(GRUB2_PATH)/configure
-	cd $(GRUB2_PATH) && \
-		PATH=$(AARCH64_PATH)/bin:$(PATH) \
-		./configure --with-platform=efi \
-				--target=aarch64-linux-gnu \
-				--disable-werror \
-				--localedir=$(GRUB2_PATH)
-
-# Helper target to run configure if config.h doesn't exist or has been updated
+# Configure
 $(GRUB2_PATH)/config.h: $(GRUB2_PATH)/configure
-	$(MAKE) grub2-configure
+	cd $(GRUB2_PATH) && \
+		./configure --with-platform=efi \
+			    --target=aarch64-linux-gnu \
+			    --disable-werror \
+			    --localedir=$(GRUB2_PATH) \
+			    TARGET_CC=$(AARCH64_CROSS_COMPILE)gcc \
+			    TARGET_OBJCOPY=$(AARCH64_CROSS_COMPILE)objcopy \
+			    TARGET_STRIP=$(AARCH64_CROSS_COMPILE)strip
 
 # Compile
 grub2-compile: $(GRUB2_PATH)/config.h
-	PATH=$(AARCH64_PATH)/bin:$(PATH) $(MAKE) -C $(GRUB2_PATH)
+	$(MAKE) -C $(GRUB2_PATH)
 
 grub2-create-image: $(GRUB2_TMP) linux
 	# Use a written path to avoid rm -f real host machine files (in case
@@ -186,7 +183,7 @@ grub2-create-image: $(GRUB2_TMP) linux
 	virt-make-fs -t vfat $(GRUB2_TMP) $(KERNEL_EXT4)
 
 # Create the efi file
-grub2: grub2-compile $(OUT_PATH) grub2-create-image
+grub2: grub2-compile $(OUT_PATH)
 	$(GRUB2_PATH)/grub-mkstandalone \
 		-d $(GRUB2_PATH)/grub-core \
 		-O arm64-efi \
