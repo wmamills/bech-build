@@ -89,7 +89,7 @@ endif
 ################################################################################
 # Targets
 ################################################################################
-TARGET_DEPS := linux qemu uboot buildroot
+TARGET_DEPS := linux qemu uboot buildroot uimage
 
 ifeq ($(ENVSTORE),y)
 TARGET_DEPS += qemu-create-env-image
