@@ -216,7 +216,7 @@ $(LINUX_PATH)/.config: $(LINUX_DEFCONFIG_FILES)
 linux-defconfig: $(LINUX_PATH)/.config
 
 linux: linux-defconfig $(OUT_PATH)
-	yes | $(MAKE) -C $(LINUX_PATH) \
+	yes "" | $(MAKE) -C $(LINUX_PATH) \
 		ARCH=arm64 CROSS_COMPILE="$(CCACHE)$(AARCH64_CROSS_COMPILE)" \
 		Image.gz dtbs && \
 	ln -sf $(KERNEL_IMAGE) $(OUT_PATH)/ && \
