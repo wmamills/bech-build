@@ -257,6 +257,7 @@ qemu: $(QEMU_PATH)/config-host.mak
 
 $(QEMU_DTB): qemu
 	$(QEMU_BIN) -machine virt \
+		-nographic \
 		-cpu cortex-a57 \
 		-machine dumpdtb=$(QEMU_DTB)
 
