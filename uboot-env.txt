@@ -1,6 +1,6 @@
-# adjust these based on your tftp server setup
-serverip_static=192.168.1.100
-#tftp_prefix=my-sub-dir/
+# these are not needed if you are running qemu tftp emulation as is the default
+# serverip_static=192.168.1.100
+# tftp_prefix=my-sub-dir/
 
 arch=arm
 baudrate=115200
@@ -36,10 +36,12 @@ fitconfig3=run netloadfit; bootm ${fit_addr_r}#config-3
 fitconfig4=run netloadfit; bootm ${fit_addr_r}#config-4
 
 # Netboot targets
-netboot=dhcp; setenv serverip ${serverip_static}; tftp ${kernel_addr_r} ${tftp_prefix}uImage; tftp ${ramdisk_addr_r} ${tftp_prefix}rootfs.cpio.uboot; bootm ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr}
-netbootfit=dhcp; setenv serverip ${serverip_static}; tftp ${fit_addr_r} ${tftp_prefix}image.fit; bootm
-netbootgrub=dhcp; setenv serverip ${serverip_static}; tftp ${kernel_addr_r} ${tftp_prefix}grub2-arm64.efi; bootefi ${kernel_addr_r}
-netloadfit=dhcp; setenv serverip ${serverip_static}; tftp ${fit_addr_r} ${tftp_prefix}image.fit
+netboot=run do_dhcp; tftp ${kernel_addr_r} ${tftp_prefix}uImage; tftp ${ramdisk_addr_r} ${tftp_prefix}rootfs.cpio.uboot; bootm ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr}
+netbootfit=run do_dhcp; tftp ${fit_addr_r} ${tftp_prefix}image.fit; bootm
+netbootgrub=run do_dhcp; tftp ${kernel_addr_r} ${tftp_prefix}grub2-arm64.efi; bootefi ${kernel_addr_r}
+netloadfit=run do_dhcp; tftp ${fit_addr_r} ${tftp_prefix}image.fit
 
+# helper sub scripts
+do_dhcp=setenv autoload no; dhcp; if test x"${serverip_static}" != x"" ; then setenv serverip ${serverip_static}; fi
 # Misc
 nvme_init=if ${nvme_need_init}; then setenv nvme_need_init false; nvme scan; fi

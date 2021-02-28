@@ -515,7 +515,9 @@ QEMU_ARGS		+= -nographic \
 		   	   -cpu cortex-a57 \
 		   	   -d unimp \
 		   	   -m 512 \
-		   	   -no-acpi
+			   -no-acpi \
+		-netdev user,id=vmnic,tftp=$(ROOT)/out,bootfile=uEnv.txt \
+		-device virtio-net-device,netdev=vmnic \
 
 ifeq ($(QEMU_VIRTFS_ENABLE),y)
 QEMU_EXTRA_ARGS +=\
@@ -533,7 +535,6 @@ endif
 
 ifeq ($(ENVSTORE),y)
 QEMU_EXTRA_ARGS +=\
-	-netdev user,id=vmnic -device virtio-net-device,netdev=vmnic \
 	-drive if=pflash,format=raw,index=1,file=envstore.img
 endif
 
