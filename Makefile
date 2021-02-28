@@ -142,8 +142,14 @@ buildroot: $(BR_PATH)/.config $(OUT_PATH)
 
 .PHONY: buildroot-clean
 buildroot-clean:
-	cd $(BR_PATH) && git clean -xdf
+	-mv $(BR_PATH)/dl $(ROOT)/tmp-dl
+	-cd $(BR_PATH) && git clean -xdf
+	-mv $(ROOT)/tmp-dl $(BR_PATH)/dl
 
+.PHONY: buildroot-distclean
+buildroot-distclean:
+	-mv $(BR_PATH)/dl $(ROOT)/buildroot-dl-$$(date +%Y-%m-%d-%H-%M-%S)
+	cd $(BR_PATH) && git clean -xdf
 
 ################################################################################
 # Grub2
@@ -573,5 +579,5 @@ run-kernel-initrd:
 clean: buildroot-clean keys-clean grub2-clean linux-clean qemu-clean uboot-clean
 
 .PHONY: distclean
-distclean: clean
+distclean: clean buildroot-distclean
 	rm -rf $(OUT_PATH)
