@@ -108,6 +108,11 @@ endif
 .PHONY: all
 all: $(TARGET_DEPS)
 
+# build each sub project sequencially but still enable parallel builds in the 
+# subprojects.  This means don't min qemu with linux but do parallel inside of 
+# each
+.NOTPARALLEL:
+
 include toolchain.mk
 
 #################################################################################
@@ -259,7 +264,7 @@ $(QEMU_PATH)/config-host.mak:
 # Need a PHONY target here, otherwise it mixes it with the folder name "qemu".
 .PHONY: qemu
 qemu: $(QEMU_PATH)/config-host.mak
-	make -C $(QEMU_PATH)
+	$(MAKE) -C $(QEMU_PATH)
 
 $(QEMU_DTB): qemu
 	$(QEMU_BIN) -machine virt \
