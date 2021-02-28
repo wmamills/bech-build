@@ -1,0 +1,4 @@
+# this is an example for uEnv.txt
+xyz=5
+abc=6 # comment
+uenvcmd=echo xyz=${xyz} abc=${abc}; run netbootgrub

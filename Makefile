@@ -549,6 +549,9 @@ endif
 # Actual targets
 .PHONY: run-netboot
 run-netboot:
+	if [ ! -r $(OUT_PATH)/uEnv.txt ]; then \
+		cp $(BUILD_PATH)/uEnv-example.txt $(OUT_PATH)/uEnv.txt; \
+	fi
 	cd $(OUT_PATH) && \
 	$(QEMU_BIN) \
 		$(QEMU_ARGS) \
