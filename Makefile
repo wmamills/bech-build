@@ -198,7 +198,8 @@ grub2: grub2-compile $(OUT_PATH)
 	$(GRUB2_PATH)/grub-mkstandalone \
 		-d $(GRUB2_PATH)/grub-core \
 		-O arm64-efi \
-		-o $(GRUB2_EFI)
+		-o $(GRUB2_EFI) \
+		"boot/grub/grub.cfg=$(BUILD_PATH)/grub.cfg"
 
 grub2-help:
 	@echo "\n================================================================================"
