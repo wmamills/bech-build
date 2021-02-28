@@ -285,7 +285,8 @@ qemu-help:
 
 .PHONY: qemu-clean
 qemu-clean:
-	cd $(QEMU_PATH) && git clean -xdf
+	cd $(QEMU_PATH) && git clean -xdf && \
+		git submodule foreach git clean -xdf
 
 
 ################################################################################
