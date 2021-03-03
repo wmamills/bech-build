@@ -31,7 +31,7 @@ been able to identify is as below and needs to be installed on your system:
         libguestfs-tools \
         libpixman-1-dev \
         libssl-dev \
-        nzip \
+        unzip \
         rsync \
         texlive \
         tftp \
